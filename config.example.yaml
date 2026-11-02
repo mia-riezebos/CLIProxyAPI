@@ -351,6 +351,9 @@ client:
 # Shared upstream behavior applies to OAuth and API-key credentials.
 upstream:
   codex:
+    # On usage_limit_reached, confirm weekly exhaustion and spend one banked reset.
+    # Five-hour limits, review limits and capacity errors never spend a reset.
+    auto-reset-weekly-limit: false
     # Experimental full-duplex Codex Responses WebSocket steering (default: false).
     # Keeps one upstream account/model per socket; accepted input is never replayed.
     response-steering: false

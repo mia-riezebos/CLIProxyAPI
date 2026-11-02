@@ -249,6 +249,8 @@ func (c ResponseCompressionConfig) EffectiveMinBytes() int {
 
 // CodexConfig configures provider-wide Codex request behavior.
 type CodexConfig struct {
+	// AutoResetWeeklyLimit consumes a banked Codex reset after a confirmed weekly quota rejection.
+	AutoResetWeeklyLimit bool `yaml:"auto-reset-weekly-limit" json:"auto-reset-weekly-limit"`
 	// WebsocketCompression controls upstream and downstream permessage-deflate; unset means enabled.
 	WebsocketCompression *bool `yaml:"websocket-compression,omitempty" json:"websocket-compression,omitempty"`
 	// UpstreamRequestCompression enables zstd request bodies for the ChatGPT Codex backend.

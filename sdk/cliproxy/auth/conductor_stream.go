@@ -167,6 +167,11 @@ func (m *Manager) wrapStreamResult(ctx context.Context, auth *Auth, provider, re
 				result.CredentialScope = isCredentialScopedError(chunk.Err)
 				applyRequestScopedActionToResult(action, okAction, &result)
 				m.recordExecutionResult(ctx, result, auth, ephemeralResult)
+				// Output has already reached the client, so restore quota for the
+				// next request without replaying this accepted generation.
+				if !ephemeralResult {
+					m.tryResetCodexWeeklyQuota(ctx, auth, chunk.Err, opts.Headers)
+				}
 			}
 			if !forward {
 				return false
@@ -278,7 +283,7 @@ func (m *Manager) executeStreamWithModelPool(ctx context.Context, executor Provi
 			}
 			if allowRetry && !ephemeralResult {
 				alreadyTried := didRefreshOnUnauthorized
-				refreshed, okRefresh := m.tryRefreshAfterUnauthorized(newUpstreamAttemptContext(ctx), auth, errStream, alreadyTried, execOpts.Headers)
+				refreshed, okRefresh := m.tryRecoverAfterError(newUpstreamAttemptContext(ctx), auth, errStream, alreadyTried, execOpts.Headers)
 				if okRefresh {
 					auth = refreshed
 					publishSelectedAuthMetadata(execOpts.Metadata, auth)
@@ -359,7 +364,7 @@ func (m *Manager) executeStreamWithModelPool(ctx context.Context, executor Provi
 			}
 			if allowRetry && !ephemeralResult {
 				alreadyTried := didRefreshOnUnauthorized
-				refreshed, okRefresh := m.tryRefreshAfterUnauthorized(newUpstreamAttemptContext(ctx), auth, bootstrapErr, alreadyTried, execOpts.Headers)
+				refreshed, okRefresh := m.tryRecoverAfterError(newUpstreamAttemptContext(ctx), auth, bootstrapErr, alreadyTried, execOpts.Headers)
 				if okRefresh {
 					discardStreamChunks(streamResult.Chunks)
 					auth = refreshed
